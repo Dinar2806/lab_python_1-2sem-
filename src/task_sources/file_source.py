@@ -1,58 +1,70 @@
 import json
-from typing import Protocol, Any, List, Union
+import os
+
+from abc import ABC, abstractmethod
+from typing import List
 from src.task.task import Task
 
-class Reader(Protocol):
-    def read(self, file_path: str) -> Any:
-        ...
-        
-class JsonReader:
+# Абстрактный класс
+class Reader(ABC):
+    @abstractmethod
+    def get_tasks(self, file_path: str) -> List[Task]:
+        """Считывает файл и возвращает список объектов Task"""
+        pass
     
-    def get_tasks(self, file_path: str) -> List[Task]:
-        tasks: List[Task] = []
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            for item in data:
-                tasks.append(Task(item["id"], item["payload"]))
-                
-                    
+    
+class FileSource():
+    def __init__(self, file_path: str):
+        self.file_path = file_path
         
-        return tasks
+    def get_tasks(self) -> List[Task]:
+        extension = os.path.splitext(self.file_path)[1].lower()
+        if extension == '.json':
+            return self._json_reader(self.file_path)
+        
+        elif extension == '.txt':
+            return self._txt_reader(self.file_path)
+        
+        else:
+            raise ValueError(f"Расширение {extension} не поддерживается, только json и txt")
             
-
-class TxtReader:
-    def get_tasks(self, file_path: str) -> List[Task]:
+    
+    def _json_reader(self, file_path: str) -> List[Task]:
+        tasks: List[Task] = []
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for item in data:
+                    tasks.append(Task(item["id"], item["payload"]))
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            print(f"Ошибка при чтении JSON: {e}")
+        return tasks
+    
+    def _txt_reader(self, file_path: str) -> List[Task]:
         tasks: List[Task] = []
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
-                    
-                    # Пропускаем пустые строки
                     if not line:
                         continue
                     
-                    # 1. Валидация наличия разделителя
                     if ':' not in line:
-                        print(f"Ошибка в строке {line_num}: отсутствует разделитель ':'")
-                        continue
-                    task_id, payload = line.split(':', 1)
-                    if not task_id.strip():
-                        print(f"Ошибка в строке {line_num}: id не может быть пустым")
+                        print(f"Ошибка в строке {line_num}: отсутствует ':'")
                         continue
                         
+                    task_id, payload = line.split(':', 1)
                     tasks.append(Task(task_id.strip(), payload.strip()))
         except FileNotFoundError:
-            print("Ошибка. Файл не найден")
-        
+            print("Ошибка: файл не найден")
         return tasks
+        
+
+
+
             
         
                 
         
         
 
-if __name__ == "__main__":
-    obj = TxtReader()
-    data = obj.read("example.txt")        
-    print(data)

@@ -62,9 +62,9 @@ class GeneratorSource():
         """
         
         texts = [
-            f"Убрать мусор в комнате {random.randint(1,500)}"
-            f"Вымыть полы в комнате {random.randint(1,500)}"
-            f"Отправить отчет №{index}"
+            f"Убрать мусор в комнате {random.randint(1,500)}",
+            f"Вымыть полы в комнате {random.randint(1,500)}",
+            f"Отправить отчет №{index}",
             f"Позвонить клиенту {index}",
             f"Написать письмо {index}",
             f"Проверить документы {index}",
@@ -103,22 +103,6 @@ class GeneratorSource():
         return result
                 
                 
-# gen1 = GeneratorSource(3)
-# tasks1 = gen1.get_tasks()
-# [Task(0, "Тестовая задача #0"), Task(1, "Тестовая задача #1"), Task(2, "Тестовая задача #2")]
-
-# Генератор с настройками
-gen2 = GeneratorSource(count=5, id_start=10, payload_type="mixed")
-tasks2 = gen2.get_tasks()
-# [Task(10, {"number": 42, "text": "смешанные данные 0", ...}), ...]
-
-# Генератор с текстом
-gen3 = GeneratorSource(count=3, payload_type="text")
-tasks3 = gen3.get_tasks()
-
-
-print(tasks2)
-print(tasks3)
 
                 
         

@@ -36,8 +36,11 @@ class FileSource():
                 data = json.load(f)
                 for item in data:
                     tasks.append(Task(item["id"], item["payload"]))
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"Ошибка при чтении JSON: {e}")
+        except (json.JSONDecodeError, KeyError) as e:
+            raise Exception(f"Ошибка при чтении JSON: {e}")
+        
+        except FileNotFoundError:
+            raise FileNotFoundError("Ошибка: файл json не найден")
         return tasks
     
     def _txt_reader(self, file_path: str) -> List[Task]:
@@ -56,7 +59,7 @@ class FileSource():
                     task_id, payload = line.split(':', 1)
                     tasks.append(Task(task_id.strip(), payload.strip()))
         except FileNotFoundError:
-            print("Ошибка: файл не найден")
+            raise FileNotFoundError("Ошибка: файл json не найден")
         return tasks
         
 
@@ -67,4 +70,3 @@ class FileSource():
                 
         
         
-

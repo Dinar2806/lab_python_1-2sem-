@@ -76,7 +76,8 @@ class TaskCollector:
         Returns:
             Dict: Словарь {название_типа_источника: список_задач}
         """
-        results = {}
+        results: Dict[str, List[Task]] = {}
+        
         
         for source in sources:
             try:
@@ -88,40 +89,36 @@ class TaskCollector:
                     results[source_name] = []
                 results[source_name].extend(tasks)
                 
+                
             except Exception as e:
                 print(f"Ошибка при сборе из источника ({type(source).__name__}): {e}")
+
+        
+
         
         return results
     
     def _resolve_id_conflicts(self, tasks: List[Task]) -> List[Task]:
-        """
-        Разрешает конфликты ID, переназначая ID у задач с дубликатами.
-        
-        Args:
-            tasks: Список задач для проверки
-            
-        Returns:
-            List[Task]: Список задач с уникальными ID
-        """
         resolved_tasks = []
+        temp_used = self._used_ids.copy()  # Работаем с копией
         
         for task in tasks:
-            # Если ID уже занят, генерируем новый
-            if task.id in self._used_ids:
+            if task.id in temp_used:  # Проверяем по временному множеству
                 old_id = task.id
                 new_id = self._generate_unique_id()
                 
-                # Создаем новую задачу с новым ID (payload тот же)
                 new_task = Task(id=new_id, payload=task.payload)
                 resolved_tasks.append(new_task)
+                temp_used.add(new_id)  # Добавляем новый ID во временное множество
                 
                 self._conflicts_count += 1
                 print(f"    Конфликт ID {old_id} -> изменен на {new_id}")
             else:
-                # ID свободен - оставляем как есть
                 resolved_tasks.append(task)
-                self._used_ids.add(task.id)
+                temp_used.add(task.id)  # Добавляем во временное множество
         
+        # После обработки всех задач обновляем основное множество
+        self._used_ids.update(temp_used)
         return resolved_tasks
     
     def _check_conflicts(self, tasks: List[Task]) -> None:
@@ -140,12 +137,12 @@ class TaskCollector:
     
     def _generate_unique_id(self) -> int:
         """
-        Генерирует уникальный ID для задачи.
+        Генерирует уникальный айди.
         
         Returns:
             int: Уникальный ID
         """
-        # Простой способ: увеличиваем счетчик, пока не найдем свободный ID
+        # увеличиваем счетчик, пока не найдем свободный ID
         while self._next_id in self._used_ids:
             self._next_id += 1
         
@@ -171,19 +168,12 @@ class TaskCollector:
         print("="*50)
         print(f"Всего собрано задач: {len(self._all_tasks)}")
         print(f"Обнаружено конфликтов ID: {self._conflicts_count}")
+        print("==================СПИСОК ЗАДАЧ====================")
+        for task in self._all_tasks:
+            print(f"ID: {task.id} | payload: {task.payload}")
+        print("==================================================")
         
-        # Группировка по типу источника (упрощенно)
-        by_source = self.get_tasks_by_source()
-        for source_name, tasks in by_source.items():
-            print(f"  {source_name}: {len(tasks)} задач")
         
-        # Показываем несколько первых задач
-        if self._all_tasks:
-            print("\nПервые 5 задач:")
-            for i, task in enumerate(self._all_tasks[:5]):
-                print(f"  {i+1}. {task}")
-        
-        print("="*50)
     
     def reset(self) -> None:
         """Сбрасывает состояние коллектора (очищает все задачи)."""
@@ -194,17 +184,9 @@ class TaskCollector:
         print("Коллектор сброшен")
 
 
-# Упрощенная функция-коллектор для быстрого использования
+
 def quick_collect(sources: List[TaskSourceProtocol]) -> List[Task]:
-    """
-    Быстрая функция для сбора задач из списка источников.
     
-    Args:
-        sources: Список источников
-        
-    Returns:
-        List[Task]: Объединенный список задач
-    """
     collector = TaskCollector()
     collector.collect_from_sources(sources)
     return collector.get_all_tasks()
@@ -230,11 +212,14 @@ def demo_collector():
     
     # Собираем задачи
     print("Сбор задач...")
-    collector.collect_from_sources(sources)
+    result = collector.collect_from_sources(sources)
     
     # Показываем результат
     all_tasks = collector.get_all_tasks()
     print(all_tasks)
+
+    print("\nСВОДКА:\n")
+    collector.print_summary()
+
     
-    return collector
 

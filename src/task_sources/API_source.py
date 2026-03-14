@@ -46,9 +46,9 @@ class APISource:
         # "База данных" заглушки - разные данные для разных API
         self._mock_database = {
             "default": [
-                {"id": 101, "payload": "Задача из API по умолчанию"},
-                {"id": 102, "payload": "Синхронизировать данные"},
-                {"id": 103, "payload": "Обновить кэш"}
+                {"id": 101, "payload": "Задача из API #1"},
+                {"id": 102, "payload": "Задача из API #2"},
+                {"id": 103, "payload": "Задача из API #3"}
             ],
             "todo": [
                 {"id": 201, "payload": {"title": "Купить продукты", "priority": "high"}},

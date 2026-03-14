@@ -16,6 +16,8 @@ class Task:
         """
         if self.id is None:
             raise ValueError("ID задачи не может быть None")
+    def __str__(self):
+        return f"Task(id={self.id}, payload={self.payload})"
         
     def to_dict(self) -> dict:
         dict = {

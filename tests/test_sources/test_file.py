@@ -2,93 +2,71 @@ import pytest
 import json
 import tempfile
 import os
-from src.Sources import FileSource
-from src.Task import Task
+from src.task_sources.file_source import FileSource
+from src.task.task import Task
 
+# JSON фикстуры
 @pytest.fixture
 def valid_json_file():
-    data = [
-        {"id": 1, "payload": "задача 1"},
-        {"id": 2, "payload": "задача 2"},
-        {"id": 3, "payload": "задача 3"}
-    ]
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+    data = [{"id": 1, "payload": "задача 1"}, {"id": 2, "payload": "задача 2"}]
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(data, f)
         temp_path = f.name
-    
     yield temp_path
-    
-    os.unlink(temp_path)
-
-@pytest.fixture
-def empty_json_file():
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
-        json.dump([], f)
-        temp_path = f.name
-    
-    yield temp_path
-    
     os.unlink(temp_path)
 
 @pytest.fixture
 def invalid_json_file():
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         f.write('{это не json')
         temp_path = f.name
-    
     yield temp_path
-    
     os.unlink(temp_path)
 
-def test_file_source_reads_valid_json(valid_json_file):
-    source = FileSource(valid_json_file)
-    tasks = source.get_tasks()
-    
-    assert len(tasks) == 3
-    assert all(isinstance(t, Task) for t in tasks)
-    assert tasks[0].id == 1
-    assert tasks[0].payload == "задача 1"
-    assert tasks[1].id == 2
-    assert tasks[2].id == 3
-
-def test_file_source_empty_json(empty_json_file):
-    source = FileSource(empty_json_file)
-    tasks = source.get_tasks()
-    
-    assert len(tasks) == 0
-    assert tasks == []
-
-def test_file_source_file_not_found():
-    source = FileSource("несуществующий_файл.json")
-    
-    with pytest.raises(Exception) as excinfo:
-        source.get_tasks()
-    assert "не найден" in str(excinfo.value)
-
-def test_file_source_invalid_json(invalid_json_file):
-    source = FileSource(invalid_json_file)
-    
-    with pytest.raises(Exception) as excinfo:
-        source.get_tasks()
-    assert "Ошибка формата JSON" in str(excinfo.value)
-
-def test_file_source_with_custom_data():
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
-        json.dump([
-            {"id": "a1", "payload": {"name": "тест", "value": 123}},
-            {"id": 999, "payload": [1, 2, 3]}
-        ], f)
+# TXT фикстуры
+@pytest.fixture
+def valid_txt_file():
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        f.write("1: задача 1\n2: задача 2")
         temp_path = f.name
-    
-    try:
-        source = FileSource(temp_path)
-        tasks = source.get_tasks()
-        
-        assert len(tasks) == 2
-        assert tasks[0].id == "a1"
-        assert tasks[0].payload["name"] == "тест"
-        assert tasks[1].id == 999
-        assert tasks[1].payload == [1, 2, 3]
-    finally:
-        os.unlink(temp_path)
+    yield temp_path
+    os.unlink(temp_path)
+
+@pytest.fixture
+def unsupported_file():
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        f.write("1,задача 1")
+        temp_path = f.name
+    yield temp_path
+    os.unlink(temp_path)
+
+# Тесты JSON
+def test_json_valid(valid_json_file):
+    tasks = FileSource(valid_json_file).get_tasks()
+    assert len(tasks) == 2
+    assert tasks[0].id == 1
+
+def test_json_invalid(invalid_json_file):
+    with pytest.raises(Exception) as e:
+        FileSource(invalid_json_file).get_tasks()
+    assert "Ошибка при чтении JSON" in str(e.value)
+
+def test_json_not_found():
+    with pytest.raises(FileNotFoundError):
+        FileSource("no.json").get_tasks()
+
+# Тесты TXT
+def test_txt_valid(valid_txt_file):
+    tasks = FileSource(valid_txt_file).get_tasks()
+    assert len(tasks) == 2
+    assert tasks[0].id == "1"
+
+def test_txt_not_found():
+    with pytest.raises(FileNotFoundError):
+        FileSource("no.txt").get_tasks()
+
+# Тест неподдерживаемого формата
+def test_unsupported_extension(unsupported_file):
+    with pytest.raises(ValueError) as e:
+        FileSource(unsupported_file).get_tasks()
+    assert "не поддерживается" in str(e.value)

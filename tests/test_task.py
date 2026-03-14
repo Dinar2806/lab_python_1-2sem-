@@ -1,5 +1,5 @@
 import pytest
-from src.Task import Task
+from src.task.task import Task
 
 def test_task_creation():
     task = Task(id=1, payload="тест")

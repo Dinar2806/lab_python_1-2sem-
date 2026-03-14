@@ -1,9 +1,9 @@
 import pytest
-from src.Sources import APISourceStub
-from src.Task import Task
+from src.task_sources.API_source import APISource
+from src.task.task import Task
 
 def test_api_source_default():
-    source = APISourceStub()
+    source = APISource()
     tasks = source.get_tasks()
     
     assert len(tasks) == 3
@@ -14,7 +14,7 @@ def test_api_source_default():
     assert tasks[2].id == 103
 
 def test_api_source_always_returns_same_data():
-    source = APISourceStub()
+    source = APISource()
     tasks1 = source.get_tasks()
     tasks2 = source.get_tasks()
     
@@ -24,7 +24,7 @@ def test_api_source_always_returns_same_data():
         assert t1.payload == t2.payload
 
 def test_api_source_data_structure():
-    source = APISourceStub()
+    source = APISource()
     tasks = source.get_tasks()
     
     expected_payloads = [
@@ -37,7 +37,7 @@ def test_api_source_data_structure():
         assert task.payload == expected_payloads[i]
 
 def test_api_source_multiple_calls_independent():
-    source = APISourceStub()
+    source = APISource()
     tasks = source.get_tasks()
     
     # Изменение полученных задач не влияет на источник

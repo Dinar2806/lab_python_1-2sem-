@@ -1,7 +1,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
+.venv/
 .env
 .vscode/
 
@@ -35,3 +35,12 @@ yarn-error.log*
 build/
 dist/
 .DS_Store
+
+
+coverage
+.coverage.*        
+htmlcov/           
+coverage.xml       
+*.cover  
+
+
